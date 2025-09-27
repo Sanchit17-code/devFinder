@@ -17,6 +17,21 @@ app.get("/admin/getAllData",(req,res,next)=>{
     res.send("welcome to admin all data");
 })
 
+app.get("/getUserData",(req,res,next)=>{
+    console.log("inside the getUserdata route")
+    const error =  new Error("ewfjnwefj");
+    next(error);
+    // res.send("User data sent");
+})
+
+app.use("/",(err,req,res,next)=>{
+    if(err){
+        console.log("encounter an error");
+        res.status(500).send("something went wrong");
+    }
+})
+
+
 // app.get("/test",(req,res)=>{
 //     res.send("hello this is the test route");
 // })
