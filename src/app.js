@@ -1,18 +1,21 @@
 const express = require("express");
+const {isAdminAuth, isUserAuth} = require("./middlewares/auth")
 const app = express();
 
-app.use(
-    "/user",
-    (req,res,next)=>{
-        console.log("RH1");
-        next();
-    },
-    (req,res,next)=>{
-        console.log("RH2");
-        res.send("last route handler")
-        next();
-    },
-)
+
+app.use("/admin",isAdminAuth);
+
+app.get("/user/data",isUserAuth,(req,res,next)=>{
+    res.send("user data is here")
+})
+
+app.get("/user/login",(req,res,next)=>{
+    res.send("welcome to /login route handler");
+})
+
+app.get("/admin/getAllData",(req,res,next)=>{
+    res.send("welcome to admin all data");
+})
 
 // app.get("/test",(req,res)=>{
 //     res.send("hello this is the test route");
