@@ -1,49 +1,36 @@
 const express = require("express");
-const {isAdminAuth, isUserAuth} = require("./middlewares/auth")
+const {isAdminAuth, isUserAuth} = require("./middlewares/auth");
+const connectDB = require("./config/database");
 const app = express();
+const User = require("./models/user") 
 
 
-app.use("/admin",isAdminAuth);
-
-app.get("/user/data",isUserAuth,(req,res,next)=>{
-    res.send("user data is here")
-})
-
-app.get("/user/login",(req,res,next)=>{
-    res.send("welcome to /login route handler");
-})
-
-app.get("/admin/getAllData",(req,res,next)=>{
-    res.send("welcome to admin all data");
-})
-
-app.get("/getUserData",(req,res,next)=>{
-    console.log("inside the getUserdata route")
-    const error =  new Error("ewfjnwefj");
-    next(error);
-    // res.send("User data sent");
-})
-
-app.use("/",(err,req,res,next)=>{
-    if(err){
-        console.log("encounter an error");
-        res.status(500).send("something went wrong");
+app.post("/signup", async (req,res)=>{
+    const userData = {
+        firstName: "Sanchit",
+        lastName: "Agrawal",
+        emailId: "sanchitagrwal429@gmail.com",
+        age: 28,
+        password: "sanchit#1234",
+        random: "random data to test something"
+    }
+    const user = new User(userData)
+    try{
+        await user.save();
+        res.send("user added successfully");
+    }
+    catch(err){
+        res.status(400).send("there is error in adding the user");
     }
 })
 
-
-// app.get("/test",(req,res)=>{
-//     res.send("hello this is the test route");
-// })
-// app.get("/test/random",(req,res)=>{
-//     console.log(req.query);
-//     res.send("hello this is the test and random route");
-// })
-// app.get("/user/:userId",(req,res)=>{
-//     console.log(req.params);
-//     res.send("hello this is the user with user id");
-// })
-
-app.listen(7777,()=>{
-    console.log("listening to the port 7777")
+connectDB()
+.then(()=>{
+    console.log("DB connected successfully");
+    app.listen(7777,()=>{
+        console.log("listening to the port 7777")
+    })
+})
+.catch(()=>{
+    console.log("Not able to connect to DB");
 })
