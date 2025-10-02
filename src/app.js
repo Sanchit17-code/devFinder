@@ -24,6 +24,32 @@ app.get("/user", async (req,res)=>{
 
 })
 
+
+app.delete("/user", async (req,res)=>{
+    const userId = req.body.userId;
+    try{
+        const user = await User.findByIdAndDelete(userId);
+        res.send("Deleted")
+    }
+    catch(err){
+        res.status(400).send("Error in deleting the user");
+    }
+})
+
+app.patch("/user",async (req,res)=>{
+    const userId = req.body.userId;
+    const options = {
+        returnDocument : "after"
+    }
+    try{
+        const user = await User.findByIdAndUpdate(userId,req.body, options)
+        res.send(user);
+    }
+    catch(err){
+         res.status(400).send("Error in updating the user");
+    }
+})
+
 app.get("/feed", async (req,res)=>{
     try{
         const users = await User.find({})
@@ -58,6 +84,6 @@ connectDB()
         console.log("listening to the port 7777")
     })
 })
-.catch(()=>{
-    console.log("Not able to connect to DB");
+.catch((err)=>{
+    console.log("Not able to connect to DB",err);
 })
