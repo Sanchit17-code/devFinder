@@ -3,7 +3,8 @@ const {isAdminAuth, isUserAuth} = require("./middlewares/auth");
 const connectDB = require("./config/database");
 const app = express();
 const User = require("./models/user") 
-
+const {signupValidator} = require("./utils/validation")
+const bcrypt = require("bcrypt");
 app.use(express.json());
 
 app.get("/user", async (req,res)=>{
@@ -65,15 +66,46 @@ app.get("/feed", async (req,res)=>{
     }
 })
 
-app.post("/signup", async (req,res)=>{
-    console.log("req.body",req.body);
-    const user = new User(req.body)
+app.post("/login", async (req,res)=>{
     try{
+        const {emailId, password} = req.body;
+        const user = await  User.findOne({emailId: emailId})
+        if(!user){
+            throw new Error("Invalid Credentials");
+        }
+        const isPasswordMatching = await bcrypt.compare(password,user.password)
+        if(!isPasswordMatching){
+            throw new Error("Invalid Credentials");
+        }
+        else{
+            res.send("Welcome " + user.firstName);
+        }
+    }
+    catch(err){
+        res.status(400).send("Error: " + err.message)
+    }
+})
+
+
+app.post("/signup", async (req,res)=>{
+    // console.log("req.body",req.body);
+    try{
+        signupValidator(req)
+        const {firstName,lastName,emailId,password} = req.body;
+        const passwordHash = await bcrypt.hash(password,10);
+        console.log(passwordHash);
+        const user = new User({
+            firstName,
+            lastName,
+            emailId,
+            password: passwordHash
+        })
         await user.save();
         res.send("user added successfully");
     }
     catch(err){
-        res.status(400).send("there is error in adding the user");
+        console.log(err);
+        res.status(400).send("Error: " + err.message);
     }
 })
 
