@@ -1,70 +1,16 @@
 const express = require("express");
-const {isAdminAuth, isUserAuth} = require("./middlewares/auth");
+const {userAuth} = require("./middlewares/auth");
 const connectDB = require("./config/database");
 const app = express();
 const User = require("./models/user") 
 const {signupValidator} = require("./utils/validation")
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser")
 app.use(express.json());
-
-app.get("/user", async (req,res)=>{
-    const emailId = req.body.emailId;
-    console.log("emilID",emailId);
-    try{
-        const users = await User.find({emailId: emailId});
-        if(users.length>0){
-            res.send(users)
-        }
-        else{
-            res.status(404).send("No Users Found")
-        }
-    }
-    catch(err){
-        res.status.send(400).send("Something went wrong");
-    }
-
-})
+app.use(cookieParser())
 
 
-app.delete("/user", async (req,res)=>{
-    const userId = req.body.userId;
-    try{
-        const user = await User.findByIdAndDelete(userId);
-        res.send("Deleted")
-    }
-    catch(err){
-        res.status(400).send("Error in deleting the user");
-    }
-})
-
-app.patch("/user",async (req,res)=>{
-    const userId = req.body.userId;
-    const options = {
-        returnDocument : "after"
-    }
-    try{
-        const user = await User.findByIdAndUpdate(userId,req.body, options)
-        res.send(user);
-    }
-    catch(err){
-         res.status(400).send("Error in updating the user");
-    }
-})
-
-app.get("/feed", async (req,res)=>{
-    try{
-        const users = await User.find({})
-        if(users.length>0){
-            res.send(users);
-        }
-        else{
-            res.status(404).send("No users found")
-        }
-    }
-    catch(err){
-        res.status(400).send("Somehting went wrong");
-    }
-})
 
 app.post("/login", async (req,res)=>{
     try{
@@ -73,11 +19,17 @@ app.post("/login", async (req,res)=>{
         if(!user){
             throw new Error("Invalid Credentials");
         }
-        const isPasswordMatching = await bcrypt.compare(password,user.password)
+        const isPasswordMatching = await user.validatePassword(password)
         if(!isPasswordMatching){
             throw new Error("Invalid Credentials");
         }
         else{
+
+            const token = user.getJWT();
+            console.log("token",token);
+            res.cookie("token",token, {
+                expires: new Date(Date.now() + 8 * 3600000),    // even the cookie can be expired and not just the token
+            });
             res.send("Welcome " + user.firstName);
         }
     }
@@ -86,6 +38,20 @@ app.post("/login", async (req,res)=>{
     }
 })
 
+app.get("/profile", userAuth, async (req,res)=>{
+    try{
+        const userProfile = req.user;
+        res.send(userProfile);
+    }
+    catch(e){
+        res.status(400).send("Error: "+ e.message);
+    }
+})
+
+app.get("/sendConnectionRequest",userAuth,async(req,res)=>{
+    const user = req.user;
+    res.send(user.firstName +" has sent the connection request!!!")
+})
 
 app.post("/signup", async (req,res)=>{
     // console.log("req.body",req.body);
@@ -108,6 +74,8 @@ app.post("/signup", async (req,res)=>{
         res.status(400).send("Error: " + err.message);
     }
 })
+
+
 
 connectDB()
 .then(()=>{

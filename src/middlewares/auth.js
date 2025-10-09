@@ -1,24 +1,27 @@
-const isAdminAuth = (req,res,next)=>{
-    const isAuthenticated = true;
-    if(!isAuthenticated){
-        res.status(401).send("Unauthorized request");
-    }
-    else{
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+const userAuth = async (req,res,next)=>{
+    try{
+        const token = req.cookies.token;
+        if(!token){
+            throw new Error("Not Logged In")
+        }
+        const decoded = jwt.verify(token,"somePrivateKey#1244");
+        const userId = decoded._id;
+        const user = await User.findById(userId);
+        if(!user){
+            throw new Error("User is not found");
+        }
+        req.user = user;
         next();
+        
     }
-}
-const isUserAuth = (req,res,next)=>{
-    const isAuthenticated = true;
-    if(!isAuthenticated){
-        res.status(401).send("Unauthorized request");
+    catch(e){
+        res.status(400).send("ERROR: "+ e.message);
     }
-    else{
-        next();
-    }
-}
 
+}
 module.exports = {
-    isAdminAuth,
-    isUserAuth
+    userAuth
 }
 
