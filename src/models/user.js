@@ -65,6 +65,7 @@ const userSchema = new mongoose.Schema({
     timestamps: true,
 }
 )
+// dont use arrow functions here okay as the definition of this will change then 
 userSchema.methods.getJWT = function(){
     const user = this; // as this will be called by the instance of the user only
     const token =   jwt.sign({_id : user._id},"somePrivateKey#1244", {

@@ -1,6 +1,8 @@
 const express = require("express");
 const profileRouter = express.Router();
 const { userAuth } = require("../middlewares/auth");
+const User  = require("../models/user");
+const bcrypt = require("bcrypt");
 
 profileRouter.get("/profile/view", userAuth, async (req,res)=>{
     try{
@@ -15,7 +17,7 @@ profileRouter.get("/profile/view", userAuth, async (req,res)=>{
 profileRouter.patch("/profile/edit", userAuth, async(req,res)=>{
     try{
         const loggedInUser = req.user;
-         console.log("loggedIn user",loggedInUser);
+        console.log("loggedIn user",loggedInUser);
         Object.keys(req.body).forEach(eachField=>{
             loggedInUser[eachField] = req.body[eachField];
         })
@@ -28,6 +30,26 @@ profileRouter.patch("/profile/edit", userAuth, async(req,res)=>{
     }
     catch(e){
         res.status(400).send("ERROR: "+ e.message);
+    }
+})
+
+profileRouter.patch("/profile/password", userAuth, async(req,res)=>{
+    try{
+        const loggedInUser = req.user;
+        const {emailId, oldPassword, newPassword} = req.body;
+        const isPasswordMatching = await loggedInUser.validatePassword(oldPassword);
+        if(!isPasswordMatching){
+            throw new Error("Error: old password is not matching");
+        }
+        const passwordHash = await bcrypt.hash(newPassword,10);
+        loggedInUser.password = passwordHash;
+        loggedInUser.save();
+
+        res.send("Password changed successfully")
+        
+
+    }catch(err){
+        res.status(400).send("ERROR: ",err.message);
     }
 })
 
